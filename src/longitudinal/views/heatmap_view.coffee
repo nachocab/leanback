@@ -1,37 +1,36 @@
 class window.HeatmapView extends Backbone.View
     initialize: ->
-        unless @model.get("hideHeatmap")
+        unless @model.options.hideHeatmap
             @render()
 
             # model changes that update the view
-            @model.on "change:currentGeneName", => @showCurrentGeneName() # mouseover/mouseout
-            @model.on "change:clickedGeneName", => @showClickedGeneName()
+            @model.on "change:currentRowId", => @showCurrentRow() # mouseover/mouseout
+            @model.on "change:clickedRowId", => @showClickedRow()
             @model.on "change:currentCluster", => @showCurrentCluster()
             @model.on "change:currentTag", => @showCurrentTag()
 
     events: ->
         # mouse events that change the model
-        "mouseover .cell": "changeCurrentGeneName"
-        "mouseout .row": "changeCurrentGeneName"
-        "click .row": "changeClickedGeneName"
+        "mouseover .cell": "changeCurrentRowId"
+        "mouseout .row": "changeCurrentRowId"
+        "click .row": "changeClickedRowId"
         "click .tag": "changeCurrentTag"
         "click .tag_name": "changeCurrentTag"
 
     render: ->
         @heatmapColor = d3.scale.linear().domain([-1.5,0,1.5]).range(["#278DD6","#fff","#d62728"])
-        @geneTextScaleFactor = 15
+        @rowTextScaleFactor = 15
         @columnTextScaleFactor = 10
         @columnNamesMargin = d3.max(columnName.length for columnName in @model.columnNames)
-        @geneSymbolsMargin = d3.max(geneSymbol.length for geneSymbol in @model.geneSymbols)
+        @rowNamesMargin = d3.max(rowName.length for rowName in @model.rowNames)
         @margin =
-            top: 250 # this must account for longest column or tag name
+            top: 250 # this must account for longest column or tag name. TODO: calculate automatically
             right: @calculateRightMargin()
-            # bottom: @columnNamesMargin*@textScaleFactor
             bottom: 50
             left: 50
         @cellSize = 25
         @width = @cellSize*@model.columnNames.length
-        @height = @cellSize*@model.geneSymbols.length
+        @height = @cellSize*@model.rowNames.length
 
 
         @heatmap = d3.select(@el)
@@ -40,8 +39,8 @@ class window.HeatmapView extends Backbone.View
           .append("g")
             .attr("transform", "translate(#{@margin.left},#{@margin.top})")
 
-        @x = d3.scale.ordinal().domain(d3.range(@model.geneExpressions[0].length)).rangeBands([0, @width])
-        @y = d3.scale.ordinal().domain(d3.range(@model.geneSymbols.length)).rangeBands([0, @height])
+        @x = d3.scale.ordinal().domain(d3.range(@model.longitudinalData[0].length)).rangeBands([0, @width])
+        @y = d3.scale.ordinal().domain(d3.range(@model.rowNames.length)).rangeBands([0, @height])
 
         @columns = @heatmap.selectAll(".column")
             .data(@model.columnNames)
@@ -60,13 +59,14 @@ class window.HeatmapView extends Backbone.View
 
         @addRows()
 
-        if @.options.showTags != 0
+
+        if @model.options.tagFile
             @addTags()
 
         # bootstrap tooltip
         @$("rect.cell").tooltip
             title: ->
-                @__data__.condition.split("_").join(" ") + "<br>" + d3.round(@__data__.geneExpression,2)  # TODO: refactor this using gsub()
+                @__data__.condition.split("_").join(" ") + "<br>" + d3.round(@__data__.value,2)  # TODO: refactor this using gsub()
             placement: "top"
 
         @$("rect.tag").tooltip
@@ -75,8 +75,8 @@ class window.HeatmapView extends Backbone.View
             placement: "top"
 
     calculateRightMargin: ->
-        maxGeneSymbolLength = d3.max(@model.geneSymbols.map (x)-> x.length)
-        maxGeneSymbolLength*12 # px per letter
+        maxrowNameLength = d3.max(@model.rowNames.map (x)-> x.length)
+        maxrowNameLength*14 # px per letter
 
     addRows: ->
         that = @
@@ -89,33 +89,33 @@ class window.HeatmapView extends Backbone.View
                 .attr("width", that.x.rangeBand())
                 .attr("height", that.x.rangeBand())
                 .text((d) -> d)
-                .style("fill", (d) => that.heatmapColor(d.geneExpression))
+                .style("fill", (d) => that.heatmapColor(d.value))
 
         # Add rows
         rows = @heatmap.selectAll(".row")
-            .data(@model.geneExpressions)
+            .data(@model.longitudinalData)
           .enter().append("g")
             .attr("class", "row")
-            .attr("name", (d,i)=> @model.geneNames[i])
+            .attr("row-id", (d,i)=> @model.rowIds[i])
             .attr("cluster", (d,i) => @model.clusters[i])
             .attr("transform", (d, i)  => "translate(0,#{@y(i)})")
             .each(getRow)
 
-        # Add gene names
-        unless @model.get("hideGeneNames")
+        # Add row names
+        unless @model.options.hideRowNames
             rows.append("text")
                 .attr("x", @width + @calculateRightMargin())
                 .attr("y", @x.rangeBand() / 2)
                 .attr("dy", ".32em")
                 .attr("text-anchor", "end") # right aligned
-                .text((d, i) => @model.geneSymbols[i])
+                .text((d, i) => @model.rowNames[i])
 
     addTags: ->
         tags = ""
         $.ajax
-          url: @model.getTagFile(),
+          url: @model.options.tagFile,
           context: document.body,
-          async: false,
+          async: false, # don't know how to do this asynchronously
           success: (data)->
             tags = window.parseTags(data)
 
@@ -130,7 +130,7 @@ class window.HeatmapView extends Backbone.View
             .rangeBands([0, (tagNames.length-1)*(tagSize+tagMargin)]);
 
         @heatmap.selectAll(".row").selectAll(".tag")
-            .data((d,i) => tags[@model.geneSymbols[i]]) # we do this to avoid using the current data
+            .data((d,i) => tags[@model.rowNames[i]]) # we do this to avoid using the current data
           .enter().append("rect")
             .attr("class", "tag")
             .attr("x", heatmapWidth) # use heatmap width to know where to place the first column of tags
@@ -138,7 +138,7 @@ class window.HeatmapView extends Backbone.View
             .attr("transform", (d, i)=> "translate(" + tagScale(tagNames.indexOf(d))+",0)")
             .attr("width", @x.rangeBand()/2)
             .attr("height", @x.rangeBand()/2)
-            .attr("name", (d)-> d)
+            .attr("row-id", (d)-> d)
             .text((d)-> d )
             .style("fill", (d,i)-> window.tagColor(d))
             .style("stroke", "none")
@@ -162,13 +162,13 @@ class window.HeatmapView extends Backbone.View
 
 
 
-    changeCurrentGeneName: (e)->
+    changeCurrentRowId: (e)->
         e.stopPropagation()
-        @model.set currentGeneName: if e.type=="mouseover" then d3.select(e.target.parentNode).attr("name") else null
+        @model.set currentRowId: if e.type=="mouseover" then d3.select(e.target.parentNode).attr("row-id") else null
 
-    changeClickedGeneName: (e)->
+    changeClickedRowId: (e)->
         e.stopPropagation()
-        @model.set clickedGeneName: d3.select(e.target.parentNode).attr("name")
+        @model.set clickedRowId: d3.select(e.target.parentNode).attr("row-id")
 
     changeCurrentTag: (e)->
         e.stopPropagation()
@@ -182,31 +182,31 @@ class window.HeatmapView extends Backbone.View
         if currentTag && @model.get("currentTag") == currentTag.attr("name")
             @model.set currentTag: null
         else
-            d3.selectAll(".tag_name[name=#{currentTag.text()}]").classed("current",1)
+            d3.selectAll(".tag_name[row-id=#{currentTag.text()}]").classed("current",1)
             @model.set currentTag: currentTag.text()
 
-    showCurrentGeneName: ->
+    showCurrentRow: ->
         d3.selectAll(".row").filter(":not(.clicked)").classed("current",0)
 
-        currentGeneName = @model.get "currentGeneName"
-        if currentGeneName?
-            currentGene = @heatmap.select("[name=#{currentGeneName}]")
-            currentGene.classed("current",1)
+        currentRowIdId = @model.get "currentRowIdId"
+        if currentRowIdId?
+            currentRowId = @heatmap.select("[row-id=#{currentRowIdId}]")
+            currentRowId.classed("current",1)
 
-    showClickedGeneName: ->
-        clickedGeneName = @model.get "clickedGeneName"
-        if clickedGeneName?
-            clickedGene = @heatmap.select("[name=#{clickedGeneName}]")
+    showClickedRow: ->
+        clickedRowId = @model.get "clickedRowId"
+        if clickedRowId?
+            clickedRow = @heatmap.select("[row-id=#{clickedRowId}]")
 
-            # clickedGene.style("visibility","visible") # I'd like to be able to show a row when clicked on PCP from a non-current cluster, but it doesn't work yet
+            # clickedRow.style("visibility","visible") # I'd like to be able to show a row when clicked on PCP from a non-current cluster, but it doesn't work yet
 
             # update position of PCP
-            d3.select("#pcp").style("top", Math.max(150,clickedGene.filter(".row").node().offsetParent.scrollTop)+50)
+            d3.select("#pcp").style("top", Math.max(150,clickedRow.filter(".row").node().offsetParent.scrollTop)+50)
 
-            @removeClickedGeneName()
-            clickedGene.classed("current clicked",1)
+            @removeClickedRow()
+            clickedRow.classed("current clicked",1)
 
-    removeClickedGeneName: ->
+    removeClickedRow: ->
         d3.selectAll(".row").classed("current clicked",0)
 
     showCurrentCluster: ->
@@ -232,7 +232,7 @@ class window.HeatmapView extends Backbone.View
         # learn how to do data.filter properly, so you can change color of .tag_column
 
         if currentTag
-            rowsToUpdate = d3.selectAll($(".tag[name='#{currentTag}']").parent())
+            rowsToUpdate = d3.selectAll($(".tag[row-id='#{currentTag}']").parent())
         else
             rowsToUpdate = @heatmap.selectAll(".row")
 

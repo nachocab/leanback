@@ -35,6 +35,15 @@ window.getUrlVars = ->
     )
     vars
 
+window.resetOnClick = (model)->
+    d3.select("body").on("click", ()->
+        model.set({ clickedRowId: null })
+        model.set({ currentTag: null })
+        d3.selectAll(".tag_name").classed("current", 0)
+        model.set({ currentCluster: null })
+        d3.selectAll(".clusters span").classed("current", 0)
+    )
+
 window.joinSentence = (arr)->
     arr2 = arr.slice(0) # otherwise pop modifies arr
     last = arr2.pop()

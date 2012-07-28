@@ -1,0 +1,51 @@
+!!!
+%html{:lang => "en"}
+  %head
+    %meta{:charset => "utf-8"}
+    %title LeanBack
+    %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}
+    %meta{:content => "", :name => "description"}
+    %meta{:content => "Nacho Caballero", :name => "author"}
+
+    %link{:href => "https://fonts.googleapis.com/css?family=Lobster", :rel => "stylesheet"}
+    %link{:href => "main.css", :rel => "stylesheet"}
+
+    /[if lt IE 9]
+      %script{:src => "http://html5shim.googlecode.com/svn/trunk/html5.js"}
+
+  %body
+    %header
+    %main
+      #sidebar
+      %svg#volcano
+      .clearfix
+
+    %footer.footer
+      %p
+        Built with
+        = succeed "." do
+          %a{:href => "http://d3js.org/"} d3.js
+      %a{:href => "mailto:nacho@bu.edu", :rel => "author"} Nacho Caballero
+
+    / Javascript
+    / placed at the end of the document so pages load faster
+    %script{:src => "http://code.jquery.com/jquery-1.7.1.min.js"}
+    %script{:src => "http://documentcloud.github.com/underscore/underscore.js"}
+    %script{:src => "http://documentcloud.github.com/backbone/backbone.js"}
+    %script{:src => "http://mbostock.github.com/d3/d3.js"}
+    // %script{:src => "../../js/jquery.js"}
+    // %script{:src => "../../js/underscore.js"}
+    // %script{:src => "../../js/backbone.js"}
+    // %script{:src => "../../js/d3.js"}
+
+    %script{:src => "http://twitter.github.com/bootstrap/assets/js/bootstrap-popover.js"}
+    %script{:src => "http://twitter.github.com/bootstrap/assets/js/bootstrap-tooltip.js"}
+    // %script{:src => "../../js/bootstrap-popover.js"}
+    // %script{:src => "../../js/bootstrap-tooltip.js"}
+
+    %script{:src => "../shared/aux.js"}
+    %script{:src => "model/volcano_model.js"}
+    %script{:src => "view/volcano_view.js"}
+    %script{:src => "app.js"}
+
+

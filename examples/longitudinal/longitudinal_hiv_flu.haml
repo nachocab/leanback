@@ -1,0 +1,63 @@
+!!!
+%html{:lang => "en"}
+  %head
+    %meta{:charset => "utf-8"}
+    %title LeanBack: Longitudinal HIV flu
+    %meta{:content => "width=device-width, initial-scale=1.0", :name => "viewport"}
+
+    %link{:href => "https://fonts.googleapis.com/css?family=Lobster", :rel => "stylesheet"}
+    %link{:href => "main.css", :rel => "stylesheet"}
+
+    %script{:src => "http://html5shim.googlecode.com/svn/trunk/html5.js"}
+
+  %body
+    #dashboard
+      .clusters
+      %h1
+
+    %main
+      %svg#heatmap
+      %svg#pcp
+
+    %script{:src => "http://code.jquery.com/jquery-1.7.1.min.js"}
+    %script{:src => "http://documentcloud.github.com/underscore/underscore.js"}
+    %script{:src => "http://documentcloud.github.com/backbone/backbone.js"}
+    %script{:src => "http://mbostock.github.com/d3/d3.js"}
+    %script{:src => "http://twitter.github.com/bootstrap/assets/js/bootstrap-popover.js"}
+    %script{:src => "http://twitter.github.com/bootstrap/assets/js/bootstrap-tooltip.js"}
+    // %script{:src => "../../js/jquery.js"}
+    // %script{:src => "../../js/underscore.js"}
+    // %script{:src => "../../js/backbone.js"}
+    // %script{:src => "../../js/d3.js"}
+    // %script{:src => "../../js/bootstrap-popover.js"}
+    // %script{:src => "../../js/bootstrap-tooltip.js"}
+
+    %script{:src => "../../lib/leanback.js"}
+
+    :javascript
+      $(document).ready(function() {
+        var inputFile;
+        var urlVars = getUrlVars();
+
+        if(urlVars && urlVars["file"]){
+          inputFile = urlVars["file"];
+        } else {
+          inputFile = "../data/hiv_fake_data.csv";
+        }
+
+        return d3.text(inputFile, function(text) {
+          var parsedGenes = d3.csv.parse(text);
+
+          var userOptions = { urlVars: urlVars, rowNameColumn: "gene_symbol", rowType: "DE genes" };
+          var parsedGenesModel = new window.LongitudinalModel(parsedGenes, userOptions);
+
+          var dashboardView = new window.DashboardView({ el: "#dashboard", model: parsedGenesModel });
+          var heatmapView = new window.HeatmapView({ el: "#heatmap", model: parsedGenesModel});
+          var pcpView = new window.PcpView({ el: "#pcp", model: parsedGenesModel});
+
+          d3.select("body").style("padding-top", d3.select("#dashboard").node().offsetHeight);
+
+          resetOnClick(parsedGenesModel);
+        });
+      });
+

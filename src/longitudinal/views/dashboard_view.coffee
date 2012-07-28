@@ -27,37 +27,34 @@ class window.DashboardView extends Backbone.View
             @model.set currentCluster: currentCluster.attr("name")
 
     showTitle: ->
-        title = "#{@getCurrentGenes().length} genes"
+        title = "#{@getCurrentRows().length} #{@model.options.rowType}"
 
-        if @model.get("showGroups")
+        if @model.options.showGroups
              title += " from #{joinSentence(@model.columnGroups)}"
 
-        if @model.get("showSuffix")
-            title += " #{unescape(@model.get("suffix"))}"
-
-        if @model.get("showClusters") && (currentCluster = @model.get("currentCluster"))
+        if @model.options.showClusters && (currentCluster = @model.get("currentCluster"))
             title += " (Cluster #{currentCluster})"
 
-        if @model.get("showTags") && (currentTag = @model.get("currentTag"))
+        if @model.options.showTags && (currentTag = @model.get("currentTag"))
             title += " (Tagged #{currentTag})"
 
         d3.select("title").text(title)
         d3.select("#dashboard h1").text(title)
 
-    # determine which genes must be shown in heatmap/pcp (changes with clusters and tags, but not with clicks)
-    getCurrentGenes: ()->
-        if @model.get("showClusters") && (currentCluster = @model.get("currentCluster"))
+    # determine which rows must be shown in heatmap/pcp
+    getCurrentRows: ()->
+        if @model.options.showClusters && (currentCluster = @model.get("currentCluster"))
             d3.selectAll(".row[cluster='#{currentCluster}']")[0]
-        else if @model.get("showTags") && (currentTag = @model.get("currentTag"))
+        else if @model.options.showTags && (currentTag = @model.get("currentTag"))
             d3.selectAll(".tag[name='#{currentTag}']")[0]
         else
-            @model.parsedGenes
+            @model.parsedData
 
     render: ->
         @showTitle()
 
         # add cluster buttons
-        if @model.get("showClusters")
+        if @model.options.showClusters
             d3.select("#dashboard .clusters").selectAll("span")
                 .data(@model.clusterNames)
               .enter().append("span")

@@ -1,19 +1,19 @@
 class window.PcpView extends Backbone.View
     initialize: ->
-        unless @model.get("hidePCP")
+        unless @model.options.hidePCP
             @render()
 
             # model changes that update the view
-            @model.on "change:currentGeneName", => @showCurrentGeneName()
-            @model.on "change:clickedGeneName", => @showClickedGeneName()
+            @model.on "change:currentRowId", => @showCurrentRow()
+            @model.on "change:clickedRowId", => @showClickedRow()
             @model.on "change:currentCluster", => @showCurrentCluster()
             @model.on "change:currentTag", => @showCurrentTag()
 
     events: ->
         # mouse events that change the model
-        "mouseover .expression-line": "changeCurrentGeneName"
-        "mouseout .expression-line": "changeCurrentGeneName"
-        "click .expression-line": "changeClickedGeneName"
+        "mouseover .expression-line": "changeCurrentRowId"
+        "mouseout .expression-line": "changeCurrentRowId"
+        "click .expression-line": "changeClickedRowId"
 
         # mouse events that update the view
         "click .expression-point": "showExpressionPointText"
@@ -38,13 +38,13 @@ class window.PcpView extends Backbone.View
             .domain(@model.columnNames)
             .rangePoints([0, @width],.2)
         @y = d3.scale.linear()
-            .domain(@model.getExtent())
+            .domain(@model.getLongitudinalValueExtent())
             .range([@height, 0],.2)
 
         @line = d3.svg.line()
-            .defined((d) => _.isFinite(d.geneExpression)) # skip null and NaN specific to d3.line, useful to determine which elements are not defined
+            .defined((d) => _.isFinite(d.value)) # skip null and NaN specific to d3.line, useful to determine which elements are not defined
             .x((d) => @x(d.condition))
-            .y((d) => @y(d.geneExpression))
+            .y((d) => @y(d.value))
 
         @xAxis = d3.svg.axis().scale(@x).tickSize(6,0)
         @renderedXAxis = @pcp.append("g")
@@ -71,7 +71,7 @@ class window.PcpView extends Backbone.View
             .attr("dy","-.5em")
             .text("log-ratio")
 
-        @addGeneExpressionLines()
+        @addLongitudinalDataLines()
 
         # Add y=0 line
         @pcp.append("line")
@@ -80,34 +80,34 @@ class window.PcpView extends Backbone.View
             .attr("x2", @width)
             .attr("class","axis zero")
 
-    addGeneExpressionLines: ->
+    addLongitudinalDataLines: ->
         @pcp.selectAll(".expression-line")
-            .data(@getGeneExpressions()) # we use this instead of @model.geneExpressions because we need groupedGeneExpressions when "showGroups" is passed as a URL parameter
+            .data(@getLongitudinalData()) # we use this instead of @model.longitudinalData because we need groupedLongitudinalData when "showGroups" is passed as a URL parameter
           .enter().append("path")
             .attr("class", "expression-line")
-            .attr("name", (d,i)=> @model.geneNames[i])
+            .attr("row-id", (d,i)=> @model.rowIds[i])
             .attr("stroke", "steelblue" )
             .attr("stroke-opacity", .5)
             .attr("d", @line)
 
-        if @model.get("showClusters")
+        if @model.options.showClusters
             @pcp.selectAll(".expression-line")
                 .attr("cluster", (d,i) => @model.clusters[i])
                 .attr("stroke", (d,i) => window.clusterColor(@model.clusters[i]))
 
-    getGeneExpressions: ->
-        if @model.get("showGroups")
-            @model.groupedGeneExpressions
+    getLongitudinalData: ->
+        if @model.options.showGroups
+            @model.groupedLongitudinalData
         else
-            @model.geneExpressions
+            @model.longitudinalData
 
-    changeCurrentGeneName: (e)->
+    changeCurrentRowId: (e)->
         e.stopPropagation()
-        @model.set currentGeneName: if e.type=="mouseover" then d3.select(e.target).attr("name") else null
+        @model.set currentRowId: if e.type=="mouseover" then d3.select(e.target).attr("row-id") else null
 
-    changeClickedGeneName: (e)->
+    changeClickedRowId: (e)->
         e.stopPropagation()
-        @model.set clickedGeneName: d3.select(e.target).attr("name")
+        @model.set clickedRowId: d3.select(e.target).attr("row-id")
 
     showExpressionPointText: (e) ->
         e.stopPropagation()
@@ -116,65 +116,65 @@ class window.PcpView extends Backbone.View
         @pcp.append("text")
             .attr("class", "expression-text")
             .attr("x", @x(d.condition))
-            .attr("y", @y(d.geneExpression))
+            .attr("y", @y(d.value))
             .attr("text-anchor","middle")
             .attr("dy", "-.8em")
-            .text(d3.round(d.geneExpression,2))
+            .text(d3.round(d.value,2))
 
-    showCurrentGeneName: ->
-        # the currentGeneName has changed, so we de-highlight every non-clicked gene
+    showCurrentRow: ->
+        # the currentRowId has changed, so we de-highlight every non-clicked row
         @pcp.selectAll(".expression-line").filter(":not(.clicked)").classed("current",0)
 
-        # remove any previous current titles (except the previously clicked gene, since we hide it)
+        # remove any previous current titles (except the previously clicked row, since we hide it)
         @pcp.selectAll("text.title").filter(":not(.clicked)").remove()
 
-        currentGeneName = @model.get("currentGeneName")
-        if currentGeneName?
-            currentGene = @pcp.select("[name=#{currentGeneName}]")
-            currentGene.classed("current",1)
+        currentRowId = @model.get("currentRowId")
+        if currentRowId?
+            currentRow = @pcp.select("[row-id=#{currentRowId}]")
+            currentRow.classed("current",1)
 
             # if no other line is clicked, put current line on top (update z-index)
             if @pcp.select(".clicked").empty()
-                currentGene.node().parentNode.appendChild(currentGene.node())
+                currentRow.node().parentNode.appendChild(currentRow.node())
 
-            # temporarily hide previously clicked gene title
+            # temporarily hide previously clicked row title
             @pcp.selectAll("text.title").filter(".clicked").style("display","none")
 
-            # show current gene title
+            # show current row title
             @pcp.append("text")
                 .attr("class", "title")
                 .attr("x", @width/2)
                 .attr("y", -40)
                 .attr("text-anchor","middle")
-                .text(@model.getGeneSymbol(currentGeneName))
+                .text(@model.getRowName(currentRowId))
         else
-            # Show gene title of the previously clicked gene
+            # Show row title of the previously clicked row
             @pcp.selectAll("text.title").filter(".clicked").style("display","block")
 
-    showClickedGeneName: ->
-        clickedGeneName = @model.get("clickedGeneName")
-        if clickedGeneName?
-            clickedGene = @pcp.select("[name=#{clickedGeneName}]")
+    showClickedRow: ->
+        clickedRowId = @model.get("clickedRowId")
+        if clickedRowId?
+            clickedRow = @pcp.select("[row-id=#{clickedRowId}]")
 
-            # clicked genes always go to the top
-            clickedGene.node().parentNode.appendChild(clickedGene.node())
+            # clicked rows always go to the top
+            clickedRow.node().parentNode.appendChild(clickedRow.node())
 
-            # remove any previous clicked genes
-            @removeClickedGeneName()
+            # remove any previously clicked row
+            @removeClickedRow()
 
-            clickedGene.classed("current clicked",1)
-            data = clickedGene.node().__data__
+            clickedRow.classed("current clicked",1)
+            data = clickedRow.node().__data__
 
-            # show gene expression points on clicked line
+            # show points on clicked line
             @pcp.selectAll(".expression-point")
-                .data(data.filter((d)-> _.isFinite(d.geneExpression))) # skip null and NaN
+                .data(data.filter((d)-> _.isFinite(d.value))) # skip null and NaN
               .enter().append("circle")
                 .attr("class", "expression-point")
                 .attr("cx", @line.x()) # use the line.x() accessor to set the cx parameter
                 .attr("cy", @line.y())
                 .attr("r", 5)
 
-            # write gene expression values on clicked line
+            # show values on clicked line
             @pcp.selectAll(".expression-text")
                 .data(data.filter(@filterTextDatapoints))
               .enter().append("text")
@@ -183,28 +183,28 @@ class window.PcpView extends Backbone.View
                 .attr("y", @line.y())
                 .attr("text-anchor","middle")
                 .attr("dy", "-.8em")
-                .text((d,i) -> d3.round(d.geneExpression,2))
+                .text((d,i) -> d3.round(d.value,2))
 
             # we know the title exists because it was created on mouseover
             @pcp.select("text.title")
                 .classed("clicked",1)
-                .text(@model.getGeneSymbol(clickedGeneName))
+                .text(@model.getRowName(clickedRowId))
 
         else
             # clicked background
-            @removeClickedGeneName()
+            @removeClickedRow()
 
     filterTextDatapoints: (item,i,arr) ->
         significantDifference = .5
 
-        (i == 0 and _.isFinite(item.geneExpression)) or # first of all groups and not null or NaN
-        ((i == arr.length - 1) and _.isFinite(item.geneExpression)) or # last of all groups and not null or NaN
-        (arr[i-1].geneExpression == null and _.isFinite(item.geneExpression)) or # preceded by a null, so first in group and not null or NaN
-        (arr[i+1].geneExpression == null and _.isFinite(item.geneExpression)) or # followed by a null and not null or NaN
-        (_.isFinite(item.geneExpression) and item.geneExpression > arr[i-1].geneExpression and item.geneExpression > arr[i+1].geneExpression and ( Math.abs(item.geneExpression - arr[i-1].geneExpression) > significantDifference or Math.abs(item.geneExpression - arr[i+1].geneExpression) > significantDifference)) or
-        (_.isFinite(item.geneExpression) and item.geneExpression < arr[i-1].geneExpression and item.geneExpression < arr[i+1].geneExpression and ( Math.abs(item.geneExpression - arr[i-1].geneExpression) > significantDifference or Math.abs(item.geneExpression - arr[i+1].geneExpression) > significantDifference))
+        (i == 0 and _.isFinite(item.value)) or # first of all groups and not null or NaN
+        ((i == arr.length - 1) and _.isFinite(item.value)) or # last of all groups and not null or NaN
+        (arr[i-1].value == null and _.isFinite(item.value)) or # preceded by a null, so first in group and not null or NaN
+        (arr[i+1].value == null and _.isFinite(item.value)) or # followed by a null and not null or NaN
+        (_.isFinite(item.value) and item.value > arr[i-1].value and item.value > arr[i+1].value and ( Math.abs(item.value - arr[i-1].value) > significantDifference or Math.abs(item.value - arr[i+1].value) > significantDifference)) or
+        (_.isFinite(item.value) and item.value < arr[i-1].value and item.value < arr[i+1].value and ( Math.abs(item.value - arr[i-1].value) > significantDifference or Math.abs(item.value - arr[i+1].value) > significantDifference))
 
-    removeClickedGeneName: ->
+    removeClickedRow: ->
         @pcp.selectAll(".expression-point").remove()
         @pcp.selectAll(".expression-text").remove()
         @pcp.selectAll(".expression-line").classed("current clicked",0)
@@ -216,7 +216,7 @@ class window.PcpView extends Backbone.View
         d3.select("#pcp").style("top", d3.select("body").node().scrollTop)
 
         if currentCluster
-            # grey out non-current cluster genes
+            # grey out non-current cluster rows
             @pcp.selectAll(".expression-line").attr("stroke","#999")
 
             @pcp.selectAll(".expression-line[cluster='#{currentCluster}']")
@@ -224,12 +224,12 @@ class window.PcpView extends Backbone.View
                 .each( -> this.parentNode.appendChild(this) )
         else
             @pcp.selectAll(".expression-line").remove()
-            @addGeneExpressionLines() # we redo the whole thing because we changed gene order, so the clusters don't match
+            @addLongitudinalDataLines() # we redo the whole thing because we changed row order, so the clusters don't match
 
     showCurrentTag: ->
         currentTag = @model.get("currentTag")
 
-        # we move it up because it makes no sense to stay at current scrollHeight if the number of genes with the currentTag is much smaller.
+        # we move it up because it makes no sense to stay at current scrollHeight if the number of rows with the currentTag is much smaller.
         d3.select("#pcp").style("top", 0)
         scroll(0,0)
 
@@ -237,20 +237,20 @@ class window.PcpView extends Backbone.View
 
         if currentTag
             # @model.set currentCluster: "all"
-            taggedGeneNames = _(d3.selectAll("#heatmap .row")).chain().first() # select all rows
+            taggedRowIds = _(d3.selectAll("#heatmap .row")).chain().first() # select all rows
                                 .filter((d) ->d.style.display != "none") # keep those that are visible
-                                .map((d)-> d3.select(d).attr("name")).value() # collect the names: gene_1, gene_3, ...
+                                .map((d)-> d3.select(d).attr("row-id")).value() # collect the row ids: row_1, row_3, ...
 
-            # color lines with tagged genes
+            # color lines with tagged rows
             @pcp.selectAll(".expression-line")
                 .attr("stroke","#999") # grey out all lines
-                .filter((d,i) -> _.include(taggedGeneNames, (d3.select(this).attr("name")))) # select lines with tagged genes
+                .filter((d,i) -> _.include(taggedRowIds, (d3.select(this).attr("row-id")))) # select lines with tagged rows
                 .attr("stroke", (d,i) -> window.clusterColor(d3.select(this).attr("cluster"))) # color them based on their cluster
                 .each( -> this.parentNode.appendChild(this) ) # update their z-index
         else
             # unselected currentTag
             @pcp.selectAll(".expression-line").remove()
-            @addGeneExpressionLines() # we redo the whole thing because we changed gene order, so the clusters don't match
+            @addLongitudinalDataLines() # we redo the whole thing because we changed row order, so the clusters don't match
 
 
 
