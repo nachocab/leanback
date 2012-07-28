@@ -1,4 +1,4 @@
-@import url(../../lib/style.css);
+@import url(../lib/leanback_style.css);
 body {
   margin: 0 auto;
   padding: 50px 0 0 0; }
@@ -17,40 +17,40 @@ text {
   #landing a {
     font-weight: bold; }
 
-#pcp {
+.pcp {
   position: absolute;
   cursor: pointer; }
-  #pcp .title {
+  .pcp .title {
     font-size: 25px;
     font-weight: bold; }
-  #pcp .expression-line {
+  .pcp .expression-line {
     stroke-width: 6;
     stroke-opacity: 0.5;
     stroke-linecap: round;
     stroke-join: round;
     fill: none; }
-    #pcp .expression-line.current {
+    .pcp .expression-line.current {
       stroke-opacity: 1;
       stroke: #d62728; }
-  #pcp .expression-text {
+  .pcp .expression-text {
     font-weight: bold; }
-  #pcp .expression-point {
+  .pcp .expression-point {
     fill: white;
     stroke: black;
     stroke-width: 4px; }
-  #pcp .axis path, #pcp .axis .tick {
+  .pcp .axis path, .pcp .axis .tick {
     stroke: black;
     stroke-opacity: 1;
     stroke-width: 2; }
-  #pcp .axis line {
+  .pcp .axis line {
     shape-rendering: crispEdges; }
-  #pcp .axis.zero {
+  .pcp .axis.zero {
     stroke: black;
     stroke-width: 2;
     stroke-opacity: 1;
     stroke-dasharray: 8, 5;
     fill: none; }
-  #pcp .axis text {
+  .pcp .axis text {
     font-weight: bold; }
 
 .tag_name {
@@ -60,17 +60,17 @@ text {
   .tag_name.current {
     fill: #d62728; }
 
-#heatmap {
+.heatmap {
   float: left;
   cursor: pointer; }
-  #heatmap .row rect {
+  .heatmap .row rect {
     stroke: black;
     stroke-width: 1px; }
-  #heatmap .row.current.clicked rect {
+  .heatmap .row.current.clicked rect {
     stroke: black; }
-  #heatmap .row.current text {
+  .heatmap .row.current text {
     font-weight: bold; }
-  #heatmap .column text {
+  .heatmap .column text {
     font-weight: normal; }
 
 #dashboard {

@@ -36,6 +36,7 @@ class window.HeatmapView extends Backbone.View
         @heatmap = d3.select(@el)
             .attr("width", @width + @margin.right + @margin.left)
             .attr("height", @height + @margin.top + @margin.bottom)
+            .attr("class","heatmap")
           .append("g")
             .attr("transform", "translate(#{@margin.left},#{@margin.top})")
 

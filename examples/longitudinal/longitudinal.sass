@@ -1,4 +1,4 @@
-@import url(../../lib/style.css)
+@import url(../lib/leanback_style.css)
 
 // disable user selections
 @mixin user-select
@@ -11,7 +11,6 @@
 body
   margin: 0 auto
   padding: 50px 0 0 0
-  // background: #B3C6FF
 
 main
   display: block
@@ -27,8 +26,7 @@ text
   a
     font-weight: bold
 
-#pcp
-  // background: lightblue
+.pcp
   position: absolute // this can't be a float because we want the pcp to move up and down when clicking on heatmap
   cursor: pointer
   .title
@@ -40,7 +38,6 @@ text
     stroke-linecap: round
     stroke-join: round
     fill: none
-    // stroke: #1f77b4
     &.current
       stroke-opacity: 1
       stroke: #d62728
@@ -51,7 +48,6 @@ text
     stroke: black
     stroke-width: 4px
   .axis
-    // display: none
     path, .tick
       stroke: black
       stroke-opacity: 1
@@ -74,8 +70,7 @@ text
   &.current
     fill: #d62728
 
-#heatmap
-  // background: pink
+.heatmap
   float: left
   cursor: pointer
   .row
@@ -99,7 +94,6 @@ $border-size: 5px
   background-color: black
   padding: 20px
   h1
-    // font-size: 40px
     line-height: 40px
     color: white
     margin: 0
@@ -124,8 +118,6 @@ $border-size: 5px
       -webkit-border-radius: 10px
       -moz-border-radius: 10px
       border-radius: 10px
-      // border-bottom: $border-size solid black
-      // border-right: $border-size solid black
       &.current
         -webkit-box-shadow: 0px 4px 4px 0px #aaa
         -moz-box-shadow: 0px 4px 4px 0px #aaa
