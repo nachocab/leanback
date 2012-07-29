@@ -5,7 +5,7 @@
     <title>LeanBack: Longitudinal HIV flu</title>
     <meta content='width=device-width, initial-scale=1.0' name='viewport' />
     <link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' />
-    <link href='../../lib/main.css' rel='stylesheet' />
+    <link href='longitudinal.css' rel='stylesheet' />
     <script src='http://html5shim.googlecode.com/svn/trunk/html5.js'></script>
   </head>
   <body>
@@ -40,7 +40,7 @@
           if(urlVars && urlVars["file"]){
             inputFile = urlVars["file"];
           } else {
-            inputFile = "../data/hiv_fake_data.csv";
+            inputFile = "../data/hiv_flu_fake_data.csv";
           }
         
           return d3.text(inputFile, function(text) {
