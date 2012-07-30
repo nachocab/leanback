@@ -1,9 +1,6 @@
 # Leanback
 
-Leanback is a way to visualize longitudinal data interactively
-
-# Motivation
-Leanback was built to overcome the limitations of static heatmaps.
+Leanback is a way to visualize longitudinal data interactively. It was built to overcome the limitations of static heatmaps. The main advantage of adding a parallel coordinates plot, is that lines are a more intuitive way to make comparisons than comparing different shades of color in a heatmap.
 
 # Usage
 
@@ -28,7 +25,7 @@ If this options is specified, and there is a column named "cluster" in the input
 Open in Chrome/Firefox: <http://localhost:8888/examples/longitudinal/index.html?clusters=1> or look at a [live example][hiv_flu_clusters_live]
 
 ## tags=PATH
-You can optionally specify a file without a header, that presents a comma-separated list of annotations or tags for each row in the heatmap.
+You can optionally specify a file without a header, that presents a comma-separated list of annotations or tags for each row in the heatmap. You can click on a tag to only show rows that are annotated with that tag.
 
 Open in Chrome/Firefox: <http://localhost:8888/examples/longitudinal/index.html?clusters=1&groups=1&tags=../data/hiv_fake_tags.csv> or look at a [live example][hiv_flu_tags_live]
 
@@ -51,7 +48,7 @@ Other parameters are set in the code. Take a look at the file: `examples/longitu
 * `rowType`: type of content displayed, used to display in the title. For example: "DE genes" (Differentially Expressed)
 
 # Requirements
-Leanback uses [D3.js][d3], [CoffeeScript][coffee], [backbone.js][backbone], [Twitter Bootstrap][bootstrap] and [jQuery][jquery]
+Leanback uses [D3.js][d3], [CoffeeScript][coffee], [Backbone.js][backbone], [Twitter Bootstrap][bootstrap] and [jQuery][jquery]
 
 # Contributing
 This project is at very early stages, so [email me][email] with any contributions or thoughts on how to improve it.
